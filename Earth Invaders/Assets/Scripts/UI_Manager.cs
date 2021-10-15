@@ -21,11 +21,21 @@ public class UI_Manager : MonoBehaviour
     [Tooltip("The text used to display the total amount of mining per second")]
     [SerializeField] TextMeshProUGUI miningValueText;
 
+    [Tooltip("The text used to display how many ships have been destroyed")]
+    [SerializeField] TextMeshProUGUI shipsDestroyedText;
+
+    [Tooltip("The text used to display You Win or You Lose")]
+    [SerializeField] TextMeshProUGUI gameOverMainText;
+
     [Tooltip("The amount of health the earth has at the start")]
     [SerializeField] float maxHealth;
 
     [Tooltip("The amount of resources the aliens need to gather")]
     [SerializeField] float targetResources;
+
+    [Tooltip("The amount of ships to destroy in order to win")]
+    [SerializeField] float shipsToDestroy;
+
 
     /// <summary>
     /// Reference to the AlienShipSpawner script in the scene
@@ -58,6 +68,11 @@ public class UI_Manager : MonoBehaviour
     float totalMining;
 
     /// <summary>
+    /// Current amount of ships destroyed
+    /// </summary>
+    int shipsDestroyed;
+
+    /// <summary>
     /// Set initial values and start the game
     /// </summary>
     void Start()
@@ -65,6 +80,39 @@ public class UI_Manager : MonoBehaviour
         player = FindObjectOfType<UserControls>();
         spawner = FindObjectOfType<AlienShipSpawner>();
         StartGame();
+    }
+
+    /// <summary>
+    /// Do the necessary setup to start the game
+    /// </summary>
+    public void StartGame()
+    {
+        //Disable the game over screen, reset values, Spawn inital ships and enable player input
+        gameOverScreen.SetActive(false);
+        currentHealth = maxHealth;
+        currentResources = 0;
+        UpdateHealth(0);
+        UpdateResources(0);
+        totalDamage = 0;
+        totalMining = 0;
+        shipsDestroyed = -1;
+        AddShipDestroyed();
+        spawner.SpawnInitialShips();
+        player.SetControlsActive(true);
+        StartCoroutine(DisplayTotals());
+    }
+
+    /// <summary>
+    /// Stop the game and display the game over screen
+    /// </summary>
+    void GameOver(string winOrLoseText)
+    {
+        //Display the game over screen, stop all coroutines, stop the spawner and stop player input
+        gameOverScreen.SetActive(true);
+        gameOverMainText.text = "GAME OVER: " + winOrLoseText;
+        StopAllCoroutines();
+        spawner.Stop();
+        player.SetControlsActive(false);
     }
 
     /// <summary>
@@ -86,7 +134,7 @@ public class UI_Manager : MonoBehaviour
         //If health reaches 0 or less then initate GameOver
         if(currentHealth <= 0)
         {
-            GameOver();
+            GameOver("YOU LOSE!");
         }
     }
 
@@ -108,7 +156,7 @@ public class UI_Manager : MonoBehaviour
         //If resources reaches the target amount or more then initate GameOver
         if (currentResources >= targetResources)
         {
-            GameOver();
+            GameOver("YOU LOSE!");
         }
     }
 
@@ -131,33 +179,16 @@ public class UI_Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// Stop the game and display the game over screen
+    /// Call when a ship is destroyed to increment the counter
     /// </summary>
-    void GameOver()
+    public void AddShipDestroyed()
     {
-        //Display the game over screen, stop all coroutines, stop the spawner and stop player input
-        gameOverScreen.SetActive(true);
-        StopAllCoroutines();
-        spawner.Stop();
-        player.SetControlsActive(false);
-    }
-
-    /// <summary>
-    /// Do the necessary setup to start the game
-    /// </summary>
-    public void StartGame()
-    {
-        //Disable the game over screen, reset values, Spawn inital ships and enable player input
-        gameOverScreen.SetActive(false);
-        currentHealth = maxHealth;
-        currentResources = 0;
-        UpdateHealth(0);
-        UpdateResources(0);
-        totalDamage = 0;
-        totalMining = 0;
-        spawner.SpawnInitialShips();
-        player.SetControlsActive(true);
-        StartCoroutine(DisplayTotals());
+        shipsDestroyed++;
+        shipsDestroyedText.text = shipsDestroyed + "/" + shipsToDestroy;
+        if(shipsDestroyed >= shipsToDestroy)
+        {
+            GameOver("YOU WIN!");
+        }
     }
 
     /// <summary>
