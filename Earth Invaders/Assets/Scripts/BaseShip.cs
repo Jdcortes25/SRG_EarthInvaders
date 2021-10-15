@@ -133,6 +133,8 @@ public abstract class BaseShip : MonoBehaviour
             parentShip.multiplier -= 0.5f;
             parentShip.childShips.Remove(this);
         }
+
+        ui.AddShipDestroyed();
         Destroy(gameObject);
     }
 
